@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      DATABASE_HOST: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - afc_project-network
+
+  web:
+    build: .
+    restart: on-failure
+    command: bash -c "python manage.py makemigrations && rm -rf staticfiles && python manage.py migrate && python manage.py collectstatic --no-input --clear && gunicorn afc_project.wsgi:application --bind 0.0.0.0:8000"
+
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - afc_project-network
+
+networks:
+  afc_project-network:
+    driver: bridge
